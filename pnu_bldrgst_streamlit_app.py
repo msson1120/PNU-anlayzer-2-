@@ -539,8 +539,9 @@ if run_clicked:
         unsafe_allow_html=True,
     )
 
+    st.markdown("<br>", unsafe_allow_html=True)
     st.download_button(
-        "엑셀 다운로드",
+        "📥 엑셀 다운로드",
         data=excel_bytes,
         file_name="pnu_건축물대장_조회결과.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
