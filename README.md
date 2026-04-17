@@ -1,4 +1,3 @@
-# PNU-anlayzer-2-
 # PNU-analyzer-2
 
 PNU(19자리)를 기반으로 건축물대장 정보를 조회하여
