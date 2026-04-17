@@ -452,7 +452,7 @@ with st.container(border=True):
                 use_container_width=True,
             )
     with c2:
-        concurrency = st.number_input("동시요청 수", min_value=1, max_value=20, value=8, step=1)
+        concurrency = st.number_input("동시요청 수", min_value=1, max_value=20, value=10, step=1)
         dedup = st.checkbox("중복 PNU 제거", value=True)
         run_clicked = st.button("실행", type="primary", use_container_width=True)
 
