@@ -366,24 +366,19 @@ def build_sheets(all_rows: List[Dict[str, Any]]):
         summary_rows.append(row)
 
     df_summary = pd.DataFrame(summary_rows, columns=SUMMARY_COLS)
-    return df_summary, df_detail, df_raw_out
+    return df_detail
 
 
 
-def make_excel_bytes(df_summary: pd.DataFrame, df_detail: pd.DataFrame) -> bytes:
+def make_excel_bytes(df_detail: pd.DataFrame) -> bytes:
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        if df_summary.empty:
-            pd.DataFrame([{"결과": "조회 결과 없음"}]).to_excel(writer, index=False, sheet_name="PNU별_요약")
-        else:
-            df_summary.to_excel(writer, index=False, sheet_name="PNU별_요약")
-
         if df_detail.empty:
-            pd.DataFrame([{"결과": "상세 데이터 없음"}]).to_excel(writer, index=False, sheet_name="건축물_상세")
+            pd.DataFrame([{"결과": "상세 데이터 없음"}]).to_excel(writer, index=False, sheet_name="pnu별 건축물대장 상세")
         else:
             cols_exist = [c for c in OUTPUT_COLS if c in df_detail.columns]
             df_detail_out = df_detail[cols_exist].copy().rename(columns=COLUMN_RENAME_MAP)
-            df_detail_out.to_excel(writer, index=False, sheet_name="건축물_상세")
+            df_detail_out.to_excel(writer, index=False, sheet_name="pnu별 건축물대장 상세")
 
     return output.getvalue()
 
@@ -452,7 +447,7 @@ with st.container(border=True):
                 use_container_width=True,
             )
     with c2:
-        concurrency = st.number_input("동시요청 수", min_value=1, max_value=20, value=10, step=1)
+        concurrency = st.number_input("동시요청 수", min_value=1, max_value=20, value=8, step=1)
         dedup = st.checkbox("중복 PNU 제거", value=True)
         run_clicked = st.button("실행", type="primary", use_container_width=True)
 
@@ -520,11 +515,11 @@ if run_clicked:
     )
 
     log_cb(f"API 완료: 총 {len(all_rows)}행 수신")
-    df_summary, df_detail, _ = build_sheets(all_rows)
-    ok_cnt = int(df_summary["세대수_합계"].sum()) if not df_summary.empty else 0
-    log_cb(f"건축물 있음 {len(df_summary)}건 / 세대수 합계 {ok_cnt}세대")
+    df_detail = build_sheets(all_rows)
+    ok_cnt = int(df_detail["PNU"].nunique()) if not df_detail.empty else 0
+    log_cb(f"건축물 있음 {ok_cnt}건")
 
-    excel_bytes = make_excel_bytes(df_summary, df_detail)
+    excel_bytes = make_excel_bytes(df_detail)
     status_box.success("완료")
     progress_bar.progress(100)
 
@@ -532,7 +527,7 @@ if run_clicked:
         f"""
         <div class="metric-row" style="grid-template-columns: repeat(3, minmax(0,1fr));">
             <div class="metric-box"><div class="metric-label">입력 지번 수</div><div class="metric-value">{len(df_in):,}</div></div>
-            <div class="metric-box"><div class="metric-label">건축물 있음</div><div class="metric-value">{len(df_summary):,}</div></div>
+            <div class="metric-box"><div class="metric-label">건축물 있음</div><div class="metric-value">{df_detail['PNU'].nunique() if not df_detail.empty else 0:,}</div></div>
             <div class="metric-box"><div class="metric-label">무효 PNU</div><div class="metric-value">{invalid_count:,}</div></div>
         </div>
         """,
@@ -548,18 +543,13 @@ if run_clicked:
         use_container_width=True,
     )
 
-    tab1, tab2, tab3 = st.tabs(["PNU별 요약", "건축물 상세", "실행 로그"])
+    tab1, tab2 = st.tabs(["건축물 상세", "실행 로그"])
     with tab1:
-        if df_summary.empty:
-            st.warning("요약 결과가 없습니다.")
-        else:
-            st.dataframe(df_summary, use_container_width=True, hide_index=True)
-    with tab2:
         if df_detail.empty:
             st.warning("상세 데이터가 없습니다.")
         else:
             cols_exist = [c for c in OUTPUT_COLS if c in df_detail.columns]
             df_detail_out = df_detail[cols_exist].copy().rename(columns=COLUMN_RENAME_MAP)
             st.dataframe(df_detail_out, use_container_width=True, hide_index=True)
-    with tab3:
+    with tab2:
         st.code("\n".join(log_lines[-500:]) if log_lines else "로그 없음", language="text")
