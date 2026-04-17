@@ -432,7 +432,7 @@ with st.container(border=True):
     with c1:
         service_key = st.text_input("서비스키(Decoding)", value="", type="password", placeholder="공공데이터포털 Decoding 서비스키 입력")
         uploaded_file = st.file_uploader("입력 엑셀(.xlsx)", type=["xlsx"])
-        with open("/mnt/data/입력양식.xlsx", "rb") as f:
+        with open("입력양식.xlsx", "rb") as f:
             st.download_button(
                 "입력양식 다운로드",
                 data=f.read(),
