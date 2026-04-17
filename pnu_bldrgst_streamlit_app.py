@@ -18,7 +18,7 @@ import streamlit as st
 BASE_URL = "https://apis.data.go.kr/1613000/BldRgstHubService"
 OPERATION = "getBrTitleInfo"
 PNU_RE = re.compile(r"^\d{19}$")
-DEFAULT_KEY = "7javXhqAm/MSlHau2beB7FuThHB9FXl0BfjHFUd6IPubv/Rtfy7kGByILgFtArnbAllQ+TpRF7+Cadyp75Nycw=="
+DEFAULT_KEY = ""
 
 COLUMN_RENAME_MAP = {
     "PNU": "PNU",
@@ -430,14 +430,22 @@ st.markdown(
 with st.container(border=True):
     c1, c2 = st.columns([2.2, 1.1])
     with c1:
-        service_key = st.text_input("서비스키(Decoding)", value=DEFAULT_KEY, type="password")
+        service_key = st.text_input("서비스키(Decoding)", value="", type="password", placeholder="공공데이터포털 Decoding 서비스키 입력")
         uploaded_file = st.file_uploader("입력 엑셀(.xlsx)", type=["xlsx"])
+        with open("/mnt/data/입력양식.xlsx", "rb") as f:
+            st.download_button(
+                "입력양식 다운로드",
+                data=f.read(),
+                file_name="입력양식.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+            )
     with c2:
         concurrency = st.number_input("동시요청 수", min_value=1, max_value=20, value=8, step=1)
         dedup = st.checkbox("중복 PNU 제거", value=True)
         run_clicked = st.button("실행", type="primary", use_container_width=True)
 
-    st.caption("입력 엑셀에는 pnu 컬럼(19자리)이 필요합니다. 출력 파일은 Sheet1=PNU별 요약, Sheet2=건축물 상세로 구성됩니다.")
+    st.caption("입력양식.xlsx 형식으로 pnu 컬럼(19자리)을 입력하세요. 출력 파일은 Sheet1=PNU별 요약, Sheet2=건축물 상세로 구성됩니다.")
 
 if run_clicked:
     if not service_key.strip():
@@ -503,7 +511,7 @@ if run_clicked:
     log_cb(f"API 완료: 총 {len(all_rows)}행 수신")
     df_summary, df_detail, _ = build_sheets(all_rows)
     ok_cnt = int(df_summary["세대수_합계"].sum()) if not df_summary.empty else 0
-    log_cb(f"조회 성공 PNU {len(df_summary)}건 / 세대수 합계 {ok_cnt}세대")
+    log_cb(f"건축물 있음 {len(df_summary)}건 / 세대수 합계 {ok_cnt}세대")
 
     excel_bytes = make_excel_bytes(df_summary, df_detail)
     status_box.success("완료")
@@ -511,11 +519,10 @@ if run_clicked:
 
     st.markdown(
         f"""
-        <div class="metric-row">
-            <div class="metric-box"><div class="metric-label">업로드 행 수</div><div class="metric-value">{len(df_in):,}</div></div>
-            <div class="metric-box"><div class="metric-label">조회 성공 PNU</div><div class="metric-value">{len(df_summary):,}</div></div>
+        <div class="metric-row" style="grid-template-columns: repeat(3, minmax(0,1fr));">
+            <div class="metric-box"><div class="metric-label">입력 지번 수</div><div class="metric-value">{len(df_in):,}</div></div>
+            <div class="metric-box"><div class="metric-label">건축물 있음</div><div class="metric-value">{len(df_summary):,}</div></div>
             <div class="metric-box"><div class="metric-label">무효 PNU</div><div class="metric-value">{invalid_count:,}</div></div>
-            <div class="metric-box"><div class="metric-label">세대수 합계</div><div class="metric-value">{ok_cnt:,}</div></div>
         </div>
         """,
         unsafe_allow_html=True,
