@@ -412,6 +412,17 @@ st.markdown(
     .metric-label {font-size: 0.82rem; color: #6b7280; margin-bottom: 4px;}
     .metric-value {font-size: 1.2rem; font-weight: 700; color: #111827;}
     div[data-testid="stFileUploader"] section {padding: 0.5rem 0.75rem;}
+    div[data-testid="stDownloadButton"] button {
+        background-color: #2563eb !important;
+        color: white !important;
+        font-weight: 600;
+        font-size: 1rem;
+        border-radius: 10px;
+        height: 48px;
+    }
+    div[data-testid="stDownloadButton"] button:hover {
+        background-color: #1d4ed8 !important;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -441,7 +452,7 @@ with st.container(border=True):
                 use_container_width=True,
             )
     with c2:
-        concurrency = st.number_input("동시요청 수", min_value=1, max_value=20, value=10, step=1)
+        concurrency = st.number_input("동시요청 수", min_value=1, max_value=20, value=8, step=1)
         dedup = st.checkbox("중복 PNU 제거", value=True)
         run_clicked = st.button("실행", type="primary", use_container_width=True)
 
